@@ -4,7 +4,10 @@ This guide explains how to integrate your application with the GTM Core Server.
 
 ## Overview
 
-The GTM Core Server exposes a RESTful API to ingest user events and trigger business workflows (campsigns, emails, nudges).
+The GTM Core Server exposes a RESTful API to ingest user events and automatically trigger business workflows. It supports:
+- **Immediate triggers**: Send an email right after an event.
+- **Delayed sequences**: Wait 24h/48h before acting.
+- **Smart Cancellation**: Cancel a pending follow-up if the user completes the goal (e.g., cancel "Complete Signup" email if user activates).
 
 **Base URL**: `http://localhost:3000` (or your deployed URL)
 
@@ -13,10 +16,10 @@ The GTM Core Server exposes a RESTful API to ingest user events and trigger busi
 ### 1. Identify User Events
 
 Determine which events in your application should trigger GTM workflows. Common examples:
-- `signup`
-- `activation` (e.g., first meaningful action)
-- `payment`
-- `invite_friend`
+- `signup_completed` (Starts onboarding)
+- `activated` (User performed core action)
+- `first_value_action` (Can cancel Nudge campaigns)
+- `upgrade_clicked`
 
 ### 2. Send Events (Client-Side or Server-Side)
 
@@ -70,7 +73,7 @@ async function trackEvent(eventName: string, userId: string, properties: any = {
 }
 
 // Usage
-await trackEvent('signup', 'user_123', { email: 'alice@example.com' });
+await trackEvent('signup_completed', 'user_123', { email: 'alice@example.com' });
 ```
 
 #### Python
@@ -93,7 +96,7 @@ def track_event(event_name, user_id, properties=None):
         print(f"Error sending event: {e}")
 
 # Usage
-track_event("activation", "user_123")
+track_event("activated", "user_123")
 ```
 
 #### cURL
@@ -102,7 +105,7 @@ track_event("activation", "user_123")
 curl -X POST "http://localhost:3000/events" \
   -H "Content-Type: application/json" \
   -d '{
-    "event": "signup",
+    "event": "signup_completed",
     "event_id": "unique-id-123",
     "user_id": "user_123",
     "properties": { "email": "bob@example.com" }
@@ -126,7 +129,7 @@ Always send a unique `event_id` (UUID v4 recommended). If GTM Core receives the 
 
 - **200 OK**: Event received.
     - `status: "received"`: Successfully processed.
-    - `status: "ignored"`: Ignored (duplicate or invalid lifecycle transition).
+    - `status: "ignored"`: Ignored (duplicate, invalid lifecycle transition, or duplicate delayed campaign).
 - **400 Bad Request**: Invalid schema (missing user_id, etc.).
 - **500 Internal Error**: Server issue.
 
@@ -134,11 +137,11 @@ Always send a unique `event_id` (UUID v4 recommended). If GTM Core receives the 
 
 The system enforces a strict user lifecycle:
 1.  **Anonymous** (Default)
-2.  **Signed Up** (Triggered by `signup` event)
-3.  **Activated** (Triggered by `activation` event)
+2.  **Signed Up** (Triggered by `signup_completed`)
+3.  **Activated** (Triggered by `activated`)
 
 **Rules:**
-- You **CANNOT** send `activation` for a user who hasn't sent `signup`.
-- You **CANNOT** send `signup` for a user who is already signed up.
+- You **CANNOT** send `activated` for a user who hasn't sent `signup_completed`.
+- You **CANNOT** send `signup_completed` for a user who is already signed up.
 
 If you violate these, the event will be ignored with `reason: "invalid_transition"`.

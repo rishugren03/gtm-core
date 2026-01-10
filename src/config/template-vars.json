@@ -1,0 +1,16 @@
+{
+  "user": {
+    "id": "string",
+    "email": "string",
+    "name": "optional"
+  },
+  "product": {
+    "name": "string",
+    "url": "string"
+  },
+  "links": {
+    "dashboard": "url",
+    "pricing": "url",
+    "docs": "url"
+  }
+}

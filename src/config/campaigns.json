@@ -1,0 +1,25 @@
+{
+  "signup_completed": {
+    "task": "send_email",
+    "template": "welcome_v1"
+  },
+  "signup_completed_delayed": {
+    "delay": "24h",
+    "cancel_if": "first_value_action",
+    "task": "send_email",
+    "template": "activation_nudge_v1"
+  },
+  "activated": {
+    "task": "send_email",
+    "template": "feature_discovery_1"
+  },
+  "upgrade_clicked": { 
+    "task": "send_email",
+    "template": "pricing_explainer_v1"
+  },
+  "churn": {
+    "delay": "48h",
+    "task": "send_email",
+    "template": "churn_feedback_v1"
+  }
+}
